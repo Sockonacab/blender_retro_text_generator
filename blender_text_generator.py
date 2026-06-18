@@ -65,45 +65,71 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         text_obj.data.materials.clear()
         text_obj.data.materials.append(mat)
             
-        # 6. Animation
+        # 6. Process Selection Menu
         context.view_layer.objects.active = text_obj
+        anim_choice = context.scene.retro_anim_preset
+        
+        # Reset default structural transformation values first
         text_obj.rotation_mode = 'XYZ'
-
         text_obj.rotation_euler = (1.57, 0, 0)
-        text_obj.keyframe_insert(data_path="rotation_euler", frame=1)
-        text_obj.rotation_euler = (1.57, 0, 2 * math.pi) 
-        text_obj.keyframe_insert(data_path="rotation_euler", frame=121)
+        text_obj.scale = (1.0, 1.0, 1.0)
         
-        if text_obj.animation_data and text_obj.animation_data.action:
-            action = text_obj.animation_data.action
-            fcurves_list = []
+        if anim_choice == 'ROTATION':
+            # Linear Spinning Loop
+            text_obj.keyframe_insert(data_path="rotation_euler", frame=1)
+            text_obj.rotation_euler = (1.57, 0, 2 * math.pi) 
+            text_obj.keyframe_insert(data_path="rotation_euler", frame=121)
+            
+            # Apply LINEAR interpolation for modern Slotted/Layered Action layouts (Blender 4.4+)
+            if text_obj.animation_data and text_obj.animation_data.action:
+                action = text_obj.animation_data.action
+                fcurves_list = []
+                if hasattr(action, "layers") and action.layers:
+                    for layer in action.layers:
+                        for strip in layer.strips:
+                            if not fcurves_list and hasattr(strip, "channelbags"):
+                                for cb in strip.channelbags:
+                                    fcurves_list.extend(cb.fcurves)
+                if not fcurves_list and hasattr(action, "fcurves"):
+                    fcurves_list = action.fcurves
+                    
+                for fcurve in fcurves_list:
+                    for kp in fcurve.keyframe_points:
+                        kp.interpolation = 'LINEAR'
+                        
+            context.scene.frame_start = 1
+            context.scene.frame_end = 120
 
-            if hasattr(action, "layers") and action.layers:
-                for layer in action.layers:
-                    for strip in layer.strips:
-                        if hasattr(text_obj.animation_data, "action_slot"):
-                            slot = text_obj.animation_data.action_slot
-                            try:
-                                channelbag = strip.channelbag(slot)
-                                if channelbag:
-                                    fcurves_list.extend(channelbag.fcurves)
-                            except:
-                                pass
-                        if not fcurves_list and hasattr(strip, "channelbags"):
-                            for cb in strip.channelbags:
-                                fcurves_list.extend(cb.fcurves)
+        elif anim_choice == 'BOUNCY_SCALE':
+            # Bouncy Scale-Up Intro
+            # Frame 1: Invisible
+            text_obj.scale = (0.0, 0.0, 0.0)
+            text_obj.keyframe_insert(data_path="scale", frame=1)
 
-            # Legacy Blender fallback
-            if not fcurves_list and hasattr(action, "fcurves"):
-                fcurves_list = action.fcurves
+            text_obj.scale = (1.0, 1.0, 1.0)
+            text_obj.keyframe_insert(data_path="scale", frame=15)
 
-            for fcurve in fcurves_list:
-                for kp in fcurve.keyframe_points:
-                    kp.interpolation = 'LINEAR'
-        
-        context.scene.frame_start = 1
-        context.scene.frame_end = 120
-        
+            text_obj.scale = (0.7, 0.7, 0.7)
+            text_obj.keyframe_insert(data_path="scale", frame=20)
+
+            text_obj.scale = (0.9, 0.9, 0.9)
+            text_obj.keyframe_insert(data_path="scale", frame=30)
+
+            text_obj.scale = (0.8, 0.8, 0.8)
+            text_obj.keyframe_insert(data_path="scale", frame=35)
+
+            text_obj.scale = (0.85, 0.85, 0.85)
+            text_obj.keyframe_insert(data_path="scale", frame=40)
+
+            text_obj.scale = (0.9, 0.9, 0.9)
+            text_obj.keyframe_insert(data_path="scale", frame=55)
+
+            text_obj.scale = (0.0, 0.0, 0.0)
+            text_obj.keyframe_insert(data_path="scale", frame=60)
+            
+            context.scene.frame_start = 1
+            context.scene.frame_end = 60
+
         return {'FINISHED'}
 
 class RETRO_TEXT_PT_Panel(bpy.types.Panel):
@@ -115,18 +141,32 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(context.scene, "retro_text_input")
-        layout.prop(context.scene, "retro_font_path")
-        layout.prop(context.scene, "retro_text_extrude")
-        layout.prop(context.scene, "retro_bevel_depth")
-        layout.prop(context.scene, "retro_space_character")
-        layout.prop(context.scene, "text_color")
-        layout.prop(context.scene, "mat_metalic")
-        layout.operator("retro.create_text")
+        
+        # Fix: Using 'TEXT' instead of 'FONTP_TEXT'
+        box = layout.box()
+        box.label(text="Text Configuration:", icon='TEXT')
+        box.prop(context.scene, "retro_text_input")
+        box.prop(context.scene, "retro_font_path")
+        box.prop(context.scene, "retro_space_character")
+        
+        box = layout.box()
+        box.label(text="Style & Geometry:", icon='MODIFIER')
+        box.prop(context.scene, "retro_text_extrude")
+        box.prop(context.scene, "retro_bevel_depth")
+        box.prop(context.scene, "text_color")
+        box.prop(context.scene, "mat_metalic")
+        
+        box = layout.box()
+        box.label(text="Animation Settings:", icon='ANIM')
+        box.prop(context.scene, "retro_anim_preset", text="Preset")
+        
+        layout.separator()
+        layout.operator("retro.create_text", icon='PLAY')
 
 def register():
     bpy.utils.register_class(RETRO_TEXT_OT_Create)
     bpy.utils.register_class(RETRO_TEXT_PT_Panel)
+    
     bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text", default="RETRO")
     bpy.types.Scene.retro_font_path = bpy.props.StringProperty(name="Font", subtype='FILE_PATH')
     bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0, max=0.4)
@@ -139,6 +179,16 @@ def register():
             size = 4
             )
     bpy.types.Scene.mat_metalic = bpy.props.FloatProperty(name="Metalic", default=0.8, min=0, max=1)
+    
+    bpy.types.Scene.retro_anim_preset = bpy.props.EnumProperty(
+        name="Animation Preset",
+        description="Choose the animation preset to apply to the retro text",
+        items=[
+            ('ROTATION', "Rotation Loop", "Spins the text over 120 frames"),
+            ('BOUNCY_SCALE', "Bouncy Scale Up", "Scale text from 0 to full to 0")
+        ],
+        default='ROTATION'
+    )
 
 def unregister():
     bpy.utils.unregister_class(RETRO_TEXT_OT_Create)
@@ -150,6 +200,7 @@ def unregister():
     del bpy.types.Scene.retro_space_character
     del bpy.types.Scene.text_color
     del bpy.types.Scene.mat_metalic
+    del bpy.types.Scene.retro_anim_preset
 
 if __name__ == "__main__":
     register()
