@@ -9,10 +9,10 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         # 1. Create an Undo marker
         bpy.ops.ed.undo_push(message="Generate Retro Text")
 
-        # 2. Cleanup Scene
+        # 2. Cleanup Scene (Now clears old fonts, cameras, AND lights)
         bpy.ops.object.select_all(action='DESELECT')
         for obj in bpy.data.objects:
-            if obj.type in ('FONT', 'CAMERA'):
+            if obj.type in ('FONT', 'CAMERA', 'LIGHT'):
                 obj.select_set(True)
         
         bpy.ops.object.delete()
@@ -50,6 +50,19 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         dist = max(dim.x, dim.y) / (2 * math.tan(fov / 2))
         cam.location.y = -(dist * 1.1)
         cam.rotation_euler = (1.57, 0, 0)
+
+        # 4b. Add Retro Studio Lighting Layout
+        bpy.ops.object.light_add(type='SUN', location=(3, -4, 5))
+        sun_light = bpy.context.object
+        sun_light.name = "Retro_KeyLight"
+        sun_light.data.energy = 4.0
+        sun_light.rotation_euler = (0.6, 0.0, 0.5)
+
+        bpy.ops.object.light_add(type='POINT', location=(-4, 2, 3))
+        kick_light = bpy.context.object
+        kick_light.name = "Retro_KickLight"
+        kick_light.data.energy = 150.0
+        kick_light.data.color = (0.0, 0.6, 1.0)
 
         # 5. Material Setup
         mat_name = "Color"
