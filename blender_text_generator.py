@@ -6,26 +6,28 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
     bl_label = "Generate Retro Text"
 
     def execute(self, context):
+        scene = context.scene
+        fps = scene.retro_fps
+
         # 1. Create an Undo marker
         bpy.ops.ed.undo_push(message="Generate Retro Text")
 
-        # 2. Cleanup Scene (Now clears old fonts, cameras, AND lights)
+        # 2. Cleanup Scene
         bpy.ops.object.select_all(action='DESELECT')
         for obj in bpy.data.objects:
             if obj.type in ('FONT', 'CAMERA', 'LIGHT'):
                 obj.select_set(True)
-        
         bpy.ops.object.delete()
 
         # 3. Add and Style Text
         bpy.ops.object.text_add(location=(0, 0, 0))
         text_obj = bpy.context.object
-        text_obj.data.body = context.scene.retro_text_input
-        text_obj.data.space_character = context.scene.retro_space_character
+        text_obj.data.body = scene.retro_text_input
+        text_obj.data.space_character = scene.retro_space_character
         
-        if context.scene.retro_font_path:
+        if scene.retro_font_path:
             try:
-                font = bpy.data.fonts.load(context.scene.retro_font_path)
+                font = bpy.data.fonts.load(scene.retro_font_path)
                 text_obj.data.font = font
             except:
                 self.report({'ERROR'}, "Could not load font file.")
@@ -35,14 +37,14 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         
         # Geometry Settings
         text_data = text_obj.data
-        text_data.extrude = context.scene.retro_text_extrude
-        text_data.bevel_depth = context.scene.retro_bevel_depth
+        text_data.extrude = scene.retro_text_extrude
+        text_data.bevel_depth = scene.retro_bevel_depth
         text_data.bevel_resolution = 2
 
         # 4. Add Camera
         bpy.ops.object.camera_add(location=(0, -5, 0))
         cam = bpy.context.object
-        context.scene.camera = cam
+        scene.camera = cam
         
         # Framing
         dim = text_obj.dimensions
@@ -71,29 +73,31 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         nodes = mat.node_tree.nodes
         bsdf = nodes.get("Principled BSDF")
         if bsdf:
-            bsdf.inputs['Base Color'].default_value = context.scene.text_color
-            bsdf.inputs['Metallic'].default_value = context.scene.mat_metalic
+            bsdf.inputs['Base Color'].default_value = scene.text_color
+            bsdf.inputs['Metallic'].default_value = scene.mat_metalic
             bsdf.inputs['Roughness'].default_value = 0.1
         
         text_obj.data.materials.clear()
         text_obj.data.materials.append(mat)
             
-        # 6. Process Selection Menu
+        # 6. Process Selection Menu & Dynamic Keyframing
         context.view_layer.objects.active = text_obj
-        anim_choice = context.scene.retro_anim_preset
+        anim_choice = scene.retro_anim_preset
         
-        # Reset default structural transformation values first
         text_obj.rotation_mode = 'XYZ'
         text_obj.rotation_euler = (1.57, 0, 0)
         text_obj.scale = (1.0, 1.0, 1.0)
-        
+
+        scene.render.fps = fps
+
         if anim_choice == 'ROTATION':
-            # Linear Spinning Loop
+            total_duration = 3.0
+            end_frame = max(2, int(total_duration * fps))
+
             text_obj.keyframe_insert(data_path="rotation_euler", frame=1)
             text_obj.rotation_euler = (1.57, 0, 2 * math.pi) 
-            text_obj.keyframe_insert(data_path="rotation_euler", frame=121)
+            text_obj.keyframe_insert(data_path="rotation_euler", frame=end_frame + 1)
             
-            # Apply LINEAR interpolation for modern Slotted/Layered Action layouts (Blender 4.4+)
             if text_obj.animation_data and text_obj.animation_data.action:
                 action = text_obj.animation_data.action
                 fcurves_list = []
@@ -110,37 +114,30 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
                     for kp in fcurve.keyframe_points:
                         kp.interpolation = 'LINEAR'
                         
-            context.scene.frame_start = 1
-            context.scene.frame_end = 120
+            scene.frame_start = 1
+            scene.frame_end = end_frame
 
         elif anim_choice == 'BOUNCY_SCALE':
-            # Bouncy Scale-Up Intro
-            text_obj.scale = (0.0, 0.0, 0.0)
-            text_obj.keyframe_insert(data_path="scale", frame=1)
+            timestamps = [0.0, 0.5, 0.65, 1.0, 1.15, 1.33, 1.8, 2.0]
+            scales = [
+                (0.0, 0.0, 0.0),
+                (1.0, 1.0, 1.0),
+                (0.7, 0.7, 0.7),
+                (0.9, 0.9, 0.9),
+                (0.8, 0.8, 0.8),
+                (0.85, 0.85, 0.85),
+                (0.9, 0.9, 0.9),
+                (0.0, 0.0, 0.0)
+            ]
 
-            text_obj.scale = (1.0, 1.0, 1.0)
-            text_obj.keyframe_insert(data_path="scale", frame=15)
-
-            text_obj.scale = (0.7, 0.7, 0.7)
-            text_obj.keyframe_insert(data_path="scale", frame=20)
-
-            text_obj.scale = (0.9, 0.9, 0.9)
-            text_obj.keyframe_insert(data_path="scale", frame=30)
-
-            text_obj.scale = (0.8, 0.8, 0.8)
-            text_obj.keyframe_insert(data_path="scale", frame=35)
-
-            text_obj.scale = (0.85, 0.85, 0.85)
-            text_obj.keyframe_insert(data_path="scale", frame=40)
-
-            text_obj.scale = (0.9, 0.9, 0.9)
-            text_obj.keyframe_insert(data_path="scale", frame=55)
-
-            text_obj.scale = (0.0, 0.0, 0.0)
-            text_obj.keyframe_insert(data_path="scale", frame=60)
+            for time_sec, scale_val in zip(timestamps, scales):
+                # Calculate exactly which frame this timestamp lands on based on current FPS
+                target_frame = max(1, int(time_sec * fps))
+                text_obj.scale = scale_val
+                text_obj.keyframe_insert(data_path="scale", frame=target_frame)
             
-            context.scene.frame_start = 1
-            context.scene.frame_end = 60
+            scene.frame_start = 1
+            scene.frame_end = max(2, int(2.0 * fps))
 
         return {'FINISHED'}
 
@@ -177,7 +174,7 @@ class RETRO_TEXT_OT_ApplyRetroCrunch(bpy.types.Operator):
 
         scene.render.filter_size = 0.01
 
-        scene.render.fps = 12
+        scene.render.fps = scene.retro_fps
 
         scene.display_settings.display_device = 'sRGB'
         scene.view_settings.view_transform = 'Standard'
@@ -213,6 +210,7 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
         box = layout.box()
         box.label(text="Animation Settings:", icon='ANIM')
         box.prop(context.scene, "retro_anim_preset", text="Preset")
+        box.prop(context.scene, "retro_fps") # Displays the new FPS slider
         
         layout.separator()
         layout.operator("retro.create_text", icon='PLAY')
@@ -245,6 +243,14 @@ def register():
             )
     bpy.types.Scene.mat_metalic = bpy.props.FloatProperty(name="Metalic", default=0.8, min=0, max=1)
     
+    bpy.types.Scene.retro_fps = bpy.props.IntProperty(
+        name="Target FPS", 
+        default=12, 
+        min=1, 
+        max=60,
+        description="Alters engine playback speed and scales timeline boundaries automatically"
+    )
+    
     bpy.types.Scene.retro_anim_preset = bpy.props.EnumProperty(
         name="Animation Preset",
         description="Choose the animation preset to apply to the retro text",
@@ -273,6 +279,7 @@ def unregister():
     del bpy.types.Scene.retro_space_character
     del bpy.types.Scene.text_color
     del bpy.types.Scene.mat_metalic
+    del bpy.types.Scene.retro_fps
     del bpy.types.Scene.retro_anim_preset
     del bpy.types.Scene.retro_export_path
 
