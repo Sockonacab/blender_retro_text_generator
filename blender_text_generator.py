@@ -62,14 +62,47 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
             bsdf.inputs['Metallic'].default_value = context.scene.mat_metalic
             bsdf.inputs['Roughness'].default_value = 0.1
         
+        text_obj.data.materials.clear()
         text_obj.data.materials.append(mat)
             
         # 6. Animation
         context.view_layer.objects.active = text_obj
+        text_obj.rotation_mode = 'XYZ'
+
         text_obj.rotation_euler = (1.57, 0, 0)
         text_obj.keyframe_insert(data_path="rotation_euler", frame=1)
-        text_obj.rotation_euler = (1.57, 0, 6.28)
-        text_obj.keyframe_insert(data_path="rotation_euler", frame=120)
+        text_obj.rotation_euler = (1.57, 0, 2 * math.pi) 
+        text_obj.keyframe_insert(data_path="rotation_euler", frame=121)
+        
+        if text_obj.animation_data and text_obj.animation_data.action:
+            action = text_obj.animation_data.action
+            fcurves_list = []
+
+            if hasattr(action, "layers") and action.layers:
+                for layer in action.layers:
+                    for strip in layer.strips:
+                        if hasattr(text_obj.animation_data, "action_slot"):
+                            slot = text_obj.animation_data.action_slot
+                            try:
+                                channelbag = strip.channelbag(slot)
+                                if channelbag:
+                                    fcurves_list.extend(channelbag.fcurves)
+                            except:
+                                pass
+                        if not fcurves_list and hasattr(strip, "channelbags"):
+                            for cb in strip.channelbags:
+                                fcurves_list.extend(cb.fcurves)
+
+            # Legacy Blender fallback
+            if not fcurves_list and hasattr(action, "fcurves"):
+                fcurves_list = action.fcurves
+
+            for fcurve in fcurves_list:
+                for kp in fcurve.keyframe_points:
+                    kp.interpolation = 'LINEAR'
+        
+        context.scene.frame_start = 1
+        context.scene.frame_end = 120
         
         return {'FINISHED'}
 
@@ -94,7 +127,7 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
 def register():
     bpy.utils.register_class(RETRO_TEXT_OT_Create)
     bpy.utils.register_class(RETRO_TEXT_PT_Panel)
-    bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text")
+    bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text", default="RETRO")
     bpy.types.Scene.retro_font_path = bpy.props.StringProperty(name="Font", subtype='FILE_PATH')
     bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0, max=0.4)
     bpy.types.Scene.retro_bevel_depth = bpy.props.FloatProperty(name="Bevel Depth", default=0.05, min=0, max=0.2)
