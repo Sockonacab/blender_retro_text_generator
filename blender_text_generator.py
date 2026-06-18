@@ -102,7 +102,6 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
 
         elif anim_choice == 'BOUNCY_SCALE':
             # Bouncy Scale-Up Intro
-            # Frame 1: Invisible
             text_obj.scale = (0.0, 0.0, 0.0)
             text_obj.keyframe_insert(data_path="scale", frame=1)
 
@@ -132,6 +131,49 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
+class RETRO_TEXT_OT_SetupExport(bpy.types.Operator):
+    bl_idname = "retro.setup_export"
+    bl_label = "Configure Render Settings"
+    bl_description = "Automatically applies background transparency and output paths"
+
+    def execute(self, context):
+        scene = context.scene
+        scene.render.film_transparent = True
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.image_settings.color_mode = 'RGBA'
+        
+        if scene.retro_export_path:
+            scene.render.filepath = scene.retro_export_path
+            
+        self.report({'INFO'}, "Render settings applied")
+        return {'FINISHED'}
+
+
+class RETRO_TEXT_OT_ApplyRetroCrunch(bpy.types.Operator):
+    bl_idname = "retro.apply_retro_crunch"
+    bl_label = "Apply Retro Style Crunch"
+    bl_description = "Alters engine settings to enforce a low-res pixelated color layout"
+
+    def execute(self, context):
+        scene = context.scene
+
+        scene.render.resolution_x = 256
+        scene.render.resolution_y = 256
+        scene.render.resolution_percentage = 100
+
+        scene.render.filter_size = 0.01
+
+        scene.render.fps = 12
+
+        scene.display_settings.display_device = 'sRGB'
+        scene.view_settings.view_transform = 'Standard'
+        scene.view_settings.look = 'High Contrast'
+
+        self.report({'INFO'}, "Low-res pixel scaling applied.")
+        return {'FINISHED'}
+
+
 class RETRO_TEXT_PT_Panel(bpy.types.Panel):
     bl_label = "Retro Text Generator"
     bl_idname = "RETRO_TEXT_PT_panel"
@@ -142,7 +184,6 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         
-        # Fix: Using 'TEXT' instead of 'FONTP_TEXT'
         box = layout.box()
         box.label(text="Text Configuration:", icon='TEXT')
         box.prop(context.scene, "retro_text_input")
@@ -162,9 +203,20 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
         
         layout.separator()
         layout.operator("retro.create_text", icon='PLAY')
+        
+        box = layout.box()
+        box.label(text="Web Export Configuration:", icon='EXPORT')
+        box.prop(context.scene, "retro_export_path")
+        
+        row = box.row(align=True)
+        row.operator("retro.setup_export", icon='REC')
+        row.operator("retro.apply_retro_crunch", icon='MOD_NOISE')
+
 
 def register():
     bpy.utils.register_class(RETRO_TEXT_OT_Create)
+    bpy.utils.register_class(RETRO_TEXT_OT_SetupExport)
+    bpy.utils.register_class(RETRO_TEXT_OT_ApplyRetroCrunch)
     bpy.utils.register_class(RETRO_TEXT_PT_Panel)
     
     bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text", default="RETRO")
@@ -189,9 +241,17 @@ def register():
         ],
         default='ROTATION'
     )
+    
+    bpy.types.Scene.retro_export_path = bpy.props.StringProperty(
+        name="Output Folder",
+        subtype='DIR_PATH',
+        default="//render/"
+    )
 
 def unregister():
     bpy.utils.unregister_class(RETRO_TEXT_OT_Create)
+    bpy.utils.unregister_class(RETRO_TEXT_OT_SetupExport)
+    bpy.utils.unregister_class(RETRO_TEXT_OT_ApplyRetroCrunch)
     bpy.utils.unregister_class(RETRO_TEXT_PT_Panel)
     del bpy.types.Scene.retro_text_input
     del bpy.types.Scene.retro_font_path
@@ -201,6 +261,7 @@ def unregister():
     del bpy.types.Scene.text_color
     del bpy.types.Scene.mat_metalic
     del bpy.types.Scene.retro_anim_preset
+    del bpy.types.Scene.retro_export_path
 
 if __name__ == "__main__":
     register()
