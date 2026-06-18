@@ -21,6 +21,7 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         bpy.ops.object.text_add(location=(0, 0, 0))
         text_obj = bpy.context.object
         text_obj.data.body = context.scene.retro_text_input
+        text_obj.data.space_character = context.scene.retro_space_character
         
         if context.scene.retro_font_path:
             try:
@@ -35,7 +36,7 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         # Geometry Settings
         text_data = text_obj.data
         text_data.extrude = context.scene.retro_text_extrude
-        text_data.bevel_depth = 0.05
+        text_data.bevel_depth = context.scene.retro_bevel_depth
         text_data.bevel_resolution = 2
 
         # 4. Add Camera
@@ -84,6 +85,8 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
         layout.prop(context.scene, "retro_text_input")
         layout.prop(context.scene, "retro_font_path")
         layout.prop(context.scene, "retro_text_extrude")
+        layout.prop(context.scene, "retro_bevel_depth")
+        layout.prop(context.scene, "retro_space_character")
         layout.prop(context.scene, "text_color")
         layout.prop(context.scene, "mat_metalic")
         layout.operator("retro.create_text")
@@ -94,6 +97,8 @@ def register():
     bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text")
     bpy.types.Scene.retro_font_path = bpy.props.StringProperty(name="Font", subtype='FILE_PATH')
     bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0, max=0.4)
+    bpy.types.Scene.retro_bevel_depth = bpy.props.FloatProperty(name="Bevel Depth", default=0.05, min=0, max=0.2)
+    bpy.types.Scene.retro_space_character = bpy.props.FloatProperty(name="Character Space", default=1, min=1, max=10)
     bpy.types.Scene.text_color = bpy.props.FloatVectorProperty(
             name = "Color Picker",
             subtype = "COLOR",
@@ -108,6 +113,8 @@ def unregister():
     del bpy.types.Scene.retro_text_input
     del bpy.types.Scene.retro_font_path
     del bpy.types.Scene.retro_text_extrude
+    del bpy.types.Scene.retro_bevel_depth
+    del bpy.types.Scene.retro_space_character
     del bpy.types.Scene.text_color
     del bpy.types.Scene.mat_metalic
 
