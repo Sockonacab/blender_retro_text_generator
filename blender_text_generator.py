@@ -93,7 +93,7 @@ def register():
     bpy.utils.register_class(RETRO_TEXT_PT_Panel)
     bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text")
     bpy.types.Scene.retro_font_path = bpy.props.StringProperty(name="Font", subtype='FILE_PATH')
-    bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0, max=1)
+    bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0, max=0.4)
     bpy.types.Scene.text_color = bpy.props.FloatVectorProperty(
             name = "Color Picker",
             subtype = "COLOR",
