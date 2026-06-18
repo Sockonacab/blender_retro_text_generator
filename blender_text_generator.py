@@ -58,7 +58,7 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
         bsdf = nodes.get("Principled BSDF")
         if bsdf:
             bsdf.inputs['Base Color'].default_value = context.scene.text_color
-            bsdf.inputs['Metallic'].default_value = 0.8
+            bsdf.inputs['Metallic'].default_value = context.scene.mat_metalic
             bsdf.inputs['Roughness'].default_value = 0.1
         
         text_obj.data.materials.append(mat)
@@ -85,6 +85,7 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
         layout.prop(context.scene, "retro_font_path")
         layout.prop(context.scene, "retro_text_extrude")
         layout.prop(context.scene, "text_color")
+        layout.prop(context.scene, "mat_metalic")
         layout.operator("retro.create_text")
 
 def register():
@@ -92,13 +93,14 @@ def register():
     bpy.utils.register_class(RETRO_TEXT_PT_Panel)
     bpy.types.Scene.retro_text_input = bpy.props.StringProperty(name="Text")
     bpy.types.Scene.retro_font_path = bpy.props.StringProperty(name="Font", subtype='FILE_PATH')
-    bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2)
+    bpy.types.Scene.retro_text_extrude = bpy.props.FloatProperty(name="Extrude", default=0.2, min=0)
     bpy.types.Scene.text_color = bpy.props.FloatVectorProperty(
             name = "Color Picker",
             subtype = "COLOR",
-            default = (0.8, 0, 0.4, 1)
+            default = (0.8, 0, 0.4, 1),
             size = 4
             )
+    bpy.types.Scene.mat_metalic = bpy.props.FloatProperty(name="Metalic", default=0.8, min=0, max=1)
 
 def unregister():
     bpy.utils.unregister_class(RETRO_TEXT_OT_Create)
@@ -107,6 +109,7 @@ def unregister():
     del bpy.types.Scene.retro_font_path
     del bpy.types.Scene.retro_text_extrude
     del bpy.types.Scene.text_color
+    del bpy.types.Scene.mat_metalic
 
 if __name__ == "__main__":
     register()
