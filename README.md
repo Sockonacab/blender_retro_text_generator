@@ -1,3 +1,13 @@
+The script allow simple image sequence generation in a retro 2000's old internet style.
+It's goal was to simplify gif creation for my own project !
+
+
+ Examples :
+ 
+ <img width="256" height="256" alt="rotate_example" src="https://github.com/user-attachments/assets/423a8f37-10d1-4dc0-b51b-b82f64158668" />
+ <img width="256" height="256" alt="bounce_example" src="https://github.com/user-attachments/assets/ecd49056-da5f-4bff-a2e1-e5b531eee464" />
+
+
 How to use : 
 
  - Open Blender 
@@ -27,4 +37,3 @@ How to use :
 
 
  Note that every change in the settings requier you to re generate the text see step 9
- 
