@@ -175,8 +175,8 @@ class RETRO_TEXT_OT_ApplyRetroCrunch(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
 
-        scene.render.resolution_x = 256
-        scene.render.resolution_y = 256
+        scene.render.resolution_x = int(scene.resolution_preset)
+        scene.render.resolution_y = int(scene.resolution_preset)
         scene.render.resolution_percentage = 100
 
         scene.render.filter_size = 0.01
@@ -224,6 +224,7 @@ class RETRO_TEXT_PT_Panel(bpy.types.Panel):
         
         box = layout.box()
         box.label(text="Web Export Configuration:", icon='EXPORT')
+        box.prop(context.scene, "resolution_preset", text="Resolution")
         box.prop(context.scene, "retro_export_path")
         
         row = box.row(align=True)
@@ -269,6 +270,18 @@ def register():
         default='ROTATION'
     )
     
+    bpy.types.Scene.resolution_preset = bpy.props.EnumProperty(
+        name="Resolution",
+        description="Choose the render resolution",
+        items=[
+            ('128', "128px", "Very cruncy 128px resolution"),
+            ('256', "256px","Default 256px resolution"),
+            ('512', "512px","Slightly Higher 512px resolution for large texts"),
+            ('1024', "1024px","Super sharp your geforce 256 might not handle it well")
+        ],
+        default='256'
+    )
+    
     bpy.types.Scene.retro_export_path = bpy.props.StringProperty(
         name="Output Folder",
         subtype='DIR_PATH',
@@ -289,6 +302,7 @@ def unregister():
     del bpy.types.Scene.mat_metalic
     del bpy.types.Scene.retro_fps
     del bpy.types.Scene.retro_anim_preset
+    del bpy.types.Scene.resolution_preset
     del bpy.types.Scene.retro_export_path
 
 if __name__ == "__main__":
