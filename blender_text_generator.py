@@ -142,6 +142,9 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
             text_obj.scale = (0.92, 0.92, 0.92)
             bpy.ops.object.modifier_add(type='WAVE')
             bpy.context.object.modifiers["Wave"].use_y = False
+            bpy.context.object.modifiers["Wave"].time_offset = -200
+            scene.frame_start = 1
+            scene.frame_end = fps
 
         return {'FINISHED'}
 
