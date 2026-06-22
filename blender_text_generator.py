@@ -139,7 +139,9 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
             scene.frame_start = 1
             scene.frame_end = max(2, int(2.0 * fps))
         elif anim_choice == 'WAVE':
+            text_obj.scale = (0.92, 0.92, 0.92)
             bpy.ops.object.modifier_add(type='WAVE')
+            bpy.context.object.modifiers["Wave"].use_y = False
 
         return {'FINISHED'}
 
