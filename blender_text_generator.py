@@ -138,6 +138,8 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
             
             scene.frame_start = 1
             scene.frame_end = max(2, int(2.0 * fps))
+        elif anim_choice == 'WAVE':
+            timestamps = []
 
         return {'FINISHED'}
 
@@ -256,7 +258,8 @@ def register():
         description="Choose the animation preset to apply to the retro text",
         items=[
             ('ROTATION', "Rotation Loop", "Spins the text over 120 frames"),
-            ('BOUNCY_SCALE', "Bouncy Scale Up", "Scale text from 0 to full to 0")
+            ('BOUNCY_SCALE', "Bouncy Scale Up", "Scale text from 0 to full to 0"),
+            ('WAVE', "Wavy animation", "Text letters moves up and down independently")
         ],
         default='ROTATION'
     )
