@@ -138,7 +138,23 @@ class RETRO_TEXT_OT_Create(bpy.types.Operator):
             
             scene.frame_start = 1
             scene.frame_end = max(2, int(2.0 * fps))
-        elif anim_choice == 'WAVE':
+        elif anim_choice == 'WAVE_HORIZONTAL':
+            text_obj.scale = (0.92, 0.92, 0.92)
+            bpy.ops.object.modifier_add(type='WAVE')
+            bpy.context.object.modifiers["Wave"].use_y = False
+            bpy.context.object.modifiers["Wave"].time_offset = -200
+            scene.frame_start = 1
+            scene.frame_end = fps
+        elif anim_choice == 'WAVE_VERICAL':
+            bpy.ops.object.select_all(action='DESELECT')
+            text_obj.select_set(True)
+            bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.remove_doubles()
+            bpy.ops.transform.rotate(value=1.5708, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False)
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.transform.rotate(value=-1.5708, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False)
             text_obj.scale = (0.92, 0.92, 0.92)
             bpy.ops.object.modifier_add(type='WAVE')
             bpy.context.object.modifiers["Wave"].use_y = False
@@ -265,7 +281,8 @@ def register():
         items=[
             ('ROTATION', "Rotation Loop", "Spins the text over 120 frames"),
             ('BOUNCY_SCALE', "Bouncy Scale Up", "Scale text from 0 to full to 0"),
-            ('WAVE', "Wavy animation", "Text letters moves up and down independently")
+            ('WAVE_HORIZONTAL', "Horizontal Wavy animation", "Text letters moves front to back independently"),
+            ('WAVE_VERICAL', "Vertical Wavy animation", "Text letters moves up and down independently")
         ],
         default='ROTATION'
     )
