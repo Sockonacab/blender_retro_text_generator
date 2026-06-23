@@ -6,6 +6,8 @@ It's goal was to simplify gif creation for my own project !
  
  <img width="256" height="256" alt="rotate_example" src="https://github.com/user-attachments/assets/423a8f37-10d1-4dc0-b51b-b82f64158668" />
  <img width="256" height="256" alt="bounce_example" src="https://github.com/user-attachments/assets/ecd49056-da5f-4bff-a2e1-e5b531eee464" />
+ <img width="256" height="256" alt="groovy" src="https://github.com/user-attachments/assets/9e677670-a763-41f1-88f2-26961e49a0e3" />
+ <img width="256" height="256" alt="wavy" src="https://github.com/user-attachments/assets/4a7a10a6-a491-414b-8bf7-b880249a200e" />
 
 
 How to use : 
